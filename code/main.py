@@ -2,7 +2,7 @@ import pygame
 from sprites import *
 from settings import *
 from groups import AllSprites
-
+from support import *
 
 class Game:
   def __init__(self):
@@ -18,7 +18,13 @@ class Game:
 
 
   #load game
+    self.load_assests()
     self.setup()
+
+  def load_assests(self):
+    #self.player_frames = import_folder('images', 'player')
+    self.bullet_surf = import_image('images', 'gun', 'bullet')
+    print(self.bullet_surf)
 
   def setup(self):
     tmx_map = load_pygame(join('data', 'maps', 'world.tmx'))
@@ -31,7 +37,7 @@ class Game:
       Sprite((x * TILE_SIZE, y * TILE_SIZE), image, self.all_sprites)
 
     for obj in tmx_map.get_layer_by_name('Entities'):
-      if obj.name == 'player':
+      if obj.name == 'Player':
         self.player = Player((obj.x, obj.y), self.all_sprites,
                         self.collision_sprites)
 
