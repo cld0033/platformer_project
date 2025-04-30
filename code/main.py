@@ -3,6 +3,7 @@ from sprites import *
 from settings import *
 from groups import AllSprites
 from support import *
+from timer import Timer
 
 class Game:
   def __init__(self):
@@ -21,6 +22,16 @@ class Game:
     self.load_assests()
     self.setup()
 
+    self.bee_timer = Timer(200, func = self.create_bee)
+    self.bee_timer.activate()
+
+  def create_bee(self):
+    Bee(self.bee_frames, (500, 600), self.all_sprites)
+
+  def create_bullet(self):
+    Bullet(self.bullet_surf, pos, direction, (self.all_sprites,
+                                              self.bullet_sprites))
+
   def load_assests(self):
     self.player_frames = import_folder('images', 'player')
     self.bullet_surf = import_image('images', 'gun', 'bullet')
@@ -28,6 +39,7 @@ class Game:
     self.bee_frames = import_folder('images', 'enemies', 'bee')
     self.worm_frames = import_folder('images', 'enemies', 'worm')
     print(self.bullet_surf)
+
 
   def setup(self):
     tmx_map = load_pygame(join('data', 'maps', 'world.tmx'))
@@ -44,6 +56,9 @@ class Game:
         self.player = Player((obj.x, obj.y), self.all_sprites,
                         self.collision_sprites, self.player_frames)
 
+    Bee(self.bee_frames, (500,600), self.all_sprites)
+    Worm(self.worm_frames, (700, 600), self.all_sprites)
+
   def run(self):
     while self.running:
       dt = self.clock.tick(FRAMERATE) / 1000
@@ -52,6 +67,7 @@ class Game:
         if event.type == pygame.QUIT:
           self.running = False
 
+      self.bee_timer.update()
       self.all_sprites.update(dt)
 
       self.display_surface.fill(BG_COLOR)

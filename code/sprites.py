@@ -1,11 +1,22 @@
-from settings import *
+from pygame.examples.arraydemo import surfdemo_show
 
+from settings import *
+from timer import Timer
 
 class Sprite(pygame.sprite.Sprite):
   def __init__(self, position, surf, groups):
     super().__init__(groups)
     self.image = surf
     self.rect = self.image.get_frect(topleft=position)
+
+class Bullet(Sprite):
+  def __init__(self, pos, surf, groups):
+    super().__init__(groups)
+    self.image = surfdemo_show
+    self.rect = self.image.get_frect(topleft = pos)
+
+  def update(self, dt):
+    self.rect.x += self.direction * self.speed * dt
 
 class AnimatedSprite(Sprite):
   def __init__(self, frames, pos, groups):
@@ -17,8 +28,10 @@ class AnimatedSprite(Sprite):
     self.image = self.frames[int(self.frame_index) % len(self.frames)]
 
 class Player(AnimatedSprite):
-  def __init__(self, position, groups, collision_sprites, frames):
+  def __init__(self, position, groups, collision_sprites, frames,
+               create_bullet):
     super().__init__(frames, position, groups)
+    self.create_bullet = create_bullet
     self.flip = True
 
     #movement and collision
@@ -27,12 +40,19 @@ class Player(AnimatedSprite):
     self.speed = 400
     self.gravity = 50
     self.on_floor = False
+    self.bullet_sprites = pygame.sprite.Group()
+
+    #timer
+    self.shoot_timer = Timer(500)
 
   def input(self):
     keys = pygame.key.get_pressed()
     self.direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
     if keys[pygame.K_SPACE] and self.on_floor:
       self.direction.y -= 20
+    if keys[pygame.K_s] and not self.shoot_timer:
+      self.create_bullet(self.rect.center, -1 if self.flip else 1)
+      self.shoot_timer.activate()
 
   def move(self, dt):
     #horizontal
@@ -76,6 +96,7 @@ class Player(AnimatedSprite):
 
 
   def update(self, dt):
+    self.shoot_timer.update()
     self.check_floor()
     self.input()
     self.move(dt)
