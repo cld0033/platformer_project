@@ -1,4 +1,5 @@
-import pygame
+from random import randint
+from math import sin
 from sprites import *
 from settings import *
 from groups import AllSprites
@@ -16,6 +17,7 @@ class Game:
 
     self.all_sprites = AllSprites()
     self.collision_sprites = pygame.sprite.Group()
+    self.bullet_sprites = pygame.sprite.Group()
 
 
   #load game
@@ -26,11 +28,17 @@ class Game:
     self.bee_timer.activate()
 
   def create_bee(self):
-    Bee(self.bee_frames, (500, 600), self.all_sprites)
+    Bee(frames=self.bee_frames, pos=(((self.level_width + WINDOW_WIDTH,600),
+        randint(0, self.level_height))),
+        groups=self.all_sprites,
+        speed=randint(300,500))
 
-  def create_bullet(self):
-    Bullet(self.bullet_surf, pos, direction, (self.all_sprites,
-                                              self.bullet_sprites))
+  def create_bullet(self, pos, direction):
+    x = pos[0] + direction * 34 if direction == 1 \
+      else pos[0] + direction * 34 - self.bullet_surf.get_width()
+    Bullet(self.bullet_surf, (x, pos[1]), direction,
+           (self.all_sprites, self.bullet_sprites))
+    Fire(self.fire_surf, pos, self.all_sprites, self.player)
 
   def load_assests(self):
     self.player_frames = import_folder('images', 'player')
@@ -43,7 +51,8 @@ class Game:
 
   def setup(self):
     tmx_map = load_pygame(join('data', 'maps', 'world.tmx'))
-
+    self.level_width = tmx_map.width * TILE_SIZE
+    self.level_height = tmx_map.height * TILE_SIZE
     for x,y, image in tmx_map.get_layer_by_name('Main').tiles():
         Sprite((x * TILE_SIZE, y * TILE_SIZE), image,
                (self.all_sprites, self.collision_sprites))
@@ -54,10 +63,17 @@ class Game:
     for obj in tmx_map.get_layer_by_name('Entities'):
       if obj.name == 'Player':
         self.player = Player((obj.x, obj.y), self.all_sprites,
-                        self.collision_sprites, self.player_frames)
+                        self.collision_sprites, self.player_frames,
+                             self.create_bullet)
+      if obj.name == 'Worm':
+        Worm(self.worm_frames, pygame.FRect(obj.x, obj.y, obj.width,
+                                            obj.height), self.all_sprites)
 
-    Bee(self.bee_frames, (500,600), self.all_sprites)
-    Worm(self.worm_frames, (700, 600), self.all_sprites)
+
+  def collision(self):
+    #bullets and enemey
+  for bullet in self.bullet_sprites:
+    sprite_collision = pygame.sprite.spritecollide(bullet, self.enemy_sprites)
 
   def run(self):
     while self.running:
